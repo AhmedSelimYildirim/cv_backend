@@ -3,6 +3,7 @@ package service
 import (
 	"cv_backend/app/repository"
 	"cv_backend/model"
+
 	"github.com/google/uuid"
 )
 
