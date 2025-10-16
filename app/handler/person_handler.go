@@ -2,6 +2,7 @@ package handler
 
 import (
 	"cv_backend/app/service"
+	"cv_backend/model"
 	"cv_backend/viewmodel"
 	"strconv"
 
@@ -25,15 +26,38 @@ func (h *PersonHandler) CreatePerson(c *fiber.Ctx) error {
 	if err := h.Service.CreatePerson(person); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(person)
+	return c.JSON(viewmodel.ToPersonDTO(person))
 }
 
+// GET /persons?page=1&limit=10&status=onaylandi
 func (h *PersonHandler) GetAllPersons(c *fiber.Ctx) error {
-	persons, err := h.Service.GetAllPersons()
+	page, err := strconv.Atoi(c.Query("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(c.Query("limit", "10"))
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+	status := c.Query("status")
+
+	persons, total, err := h.Service.GetPersonsPaginated(status, page, limit)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(persons)
+
+	var dtoList []viewmodel.PersonDTO
+	for _, p := range persons {
+		dtoList = append(dtoList, *viewmodel.ToPersonDTO(&p))
+	}
+
+	return c.JSON(fiber.Map{
+		"page":   page,
+		"limit":  limit,
+		"total":  total,
+		"data":   dtoList,
+		"status": status,
+	})
 }
 
 func (h *PersonHandler) GetPersonByID(c *fiber.Ctx) error {
@@ -42,7 +66,7 @@ func (h *PersonHandler) GetPersonByID(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Person not found"})
 	}
-	return c.JSON(person)
+	return c.JSON(viewmodel.ToPersonDTO(person))
 }
 
 func (h *PersonHandler) UpdatePerson(c *fiber.Ctx) error {
@@ -56,7 +80,7 @@ func (h *PersonHandler) UpdatePerson(c *fiber.Ctx) error {
 	if err := h.Service.UpdatePerson(person); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(person)
+	return c.JSON(viewmodel.ToPersonDTO(person))
 }
 
 func (h *PersonHandler) DeletePerson(c *fiber.Ctx) error {
@@ -65,4 +89,53 @@ func (h *PersonHandler) DeletePerson(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// PUT /persons/:id/status
+func (h *PersonHandler) UpdatePersonStatus(c *fiber.Ctx) error {
+	role := c.Locals("role")
+	if roleStr, ok := role.(string); !ok || roleStr != "admin" {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Access denied: admin only"})
+	}
+
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
+	}
+
+	var body struct {
+		StatusType                string `json:"status_type"`
+		ReasonForRejection        string `json:"reason_for_rejection"`
+		ReasonForRejectionSummary string `json:"reason_for_rejection_summary"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	person, err := h.Service.GetPersonByID(id)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Person not found"})
+	}
+
+	switch body.StatusType {
+	case "beklemede":
+		person.StatusType = model.PersonDurumBeklemede
+	case "onaylandi":
+		person.StatusType = model.PersonDurumOnaylandi
+	case "reddedildi":
+		person.StatusType = model.PersonDurumReddedildi
+	case "ilgileniliyor":
+		person.StatusType = model.PersonDurumIlgileniliyor
+	default:
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid status_type"})
+	}
+
+	person.ReasonForRejection = body.ReasonForRejection
+	person.ReasonForRejectionSummary = body.ReasonForRejectionSummary
+
+	if err := h.Service.UpdatePerson(person); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(viewmodel.ToPersonDTO(person))
 }

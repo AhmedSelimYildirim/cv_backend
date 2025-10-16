@@ -1,8 +1,6 @@
 package viewmodel
 
-import (
-	"cv_backend/model"
-)
+import "cv_backend/model"
 
 type PersonDTO struct {
 	BaseDTO
@@ -22,18 +20,12 @@ type PersonDTO struct {
 	References []ReferenceDTO `json:"references,omitempty"`
 }
 
-// Model -> DTO
 func ToPersonDTO(p *model.Person) *PersonDTO {
 	if p == nil {
 		return nil
 	}
-
 	dto := &PersonDTO{
-		BaseDTO: BaseDTO{
-			ID:        p.ID,
-			CreatedAt: p.CreatedAt,
-			UpdatedAt: p.UpdatedAt,
-		},
+		BaseDTO:                   BaseDTO{ID: p.ID, CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt},
 		Name:                      p.Name,
 		Surname:                   p.Surname,
 		PhoneNumber:               p.PhoneNumber,
@@ -59,16 +51,12 @@ func ToPersonDTO(p *model.Person) *PersonDTO {
 	return dto
 }
 
-// DTO -> Model (handler'larda kullanılıyor)
 func (d *PersonDTO) ToModel() *model.Person {
 	if d == nil {
 		return nil
 	}
-
 	person := &model.Person{
-		BaseModel: model.BaseModel{
-			ID: d.ID,
-		},
+		BaseModel:                 model.BaseModel{ID: d.ID},
 		Name:                      d.Name,
 		Surname:                   d.Surname,
 		PhoneNumber:               d.PhoneNumber,
@@ -89,10 +77,8 @@ func (d *PersonDTO) ToModel() *model.Person {
 	for _, ref := range d.References {
 		person.References = append(person.References, *ref.ToModel())
 	}
-
 	if d.Reviewer != nil {
 		person.Reviewer = *d.Reviewer.ToModel()
 	}
-
 	return person
 }
