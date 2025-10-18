@@ -2,6 +2,7 @@ package handler
 
 import (
 	"cv_backend/app/service"
+	"cv_backend/model"
 	"cv_backend/viewmodel"
 	"strconv"
 
@@ -52,6 +53,20 @@ func (h *PersonHandler) GetPersonByID(c *fiber.Ctx) error {
 	return c.JSON(viewmodel.ToPersonDTO(person))
 }
 
+func (h *PersonHandler) CreatePerson(c *fiber.Ctx) error {
+	var person model.Person
+	if err := c.BodyParser(&person); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	createdPerson, err := h.Service.CreatePerson(&person)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(viewmodel.ToPersonDTO(createdPerson))
+}
+
 func (h *PersonHandler) DeletePerson(c *fiber.Ctx) error {
 	id, _ := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err := h.Service.DeletePerson(id); err != nil {
@@ -61,11 +76,6 @@ func (h *PersonHandler) DeletePerson(c *fiber.Ctx) error {
 }
 
 func (h *PersonHandler) UpdatePersonStatus(c *fiber.Ctx) error {
-	role := c.Locals("role")
-	if roleStr, ok := role.(string); !ok || roleStr != "admin" {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Access denied: admin only"})
-	}
-
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})

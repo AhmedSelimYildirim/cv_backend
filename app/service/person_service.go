@@ -17,38 +17,6 @@ func (s *PersonService) GetPersonByID(id int64) (*model.Person, error) {
 	return s.repo.GetByID(id)
 }
 
-func (s *PersonService) DeletePerson(id int64) error {
-	person, err := s.repo.GetByID(id)
-	if err != nil {
-		return err
-	}
-	if person == nil {
-		return nil
-	}
-
-	tx := s.repo.DB.Begin()
-
-	if err := tx.Where("person_id = ?", id).Delete(&model.Language{}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-	if err := tx.Where("person_id = ?", id).Delete(&model.Position{}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-	if err := tx.Where("person_id = ?", id).Delete(&model.Reference{}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	if err := tx.Delete(&model.Person{}, id).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return tx.Commit().Error
-}
-
 func (s *PersonService) GetPersonsPaginated(status string, page, limit int) ([]model.Person, int64, error) {
 	var persons []model.Person
 	var total int64
@@ -82,6 +50,46 @@ func (s *PersonService) GetPersonsPaginated(status string, page, limit int) ([]m
 	return persons, total, nil
 }
 
+func (s *PersonService) CreatePerson(person *model.Person) (*model.Person, error) {
+	err := s.repo.Create(person)
+	if err != nil {
+		return nil, err
+	}
+	return person, nil
+}
+
 func (s *PersonService) UpdatePersonStatus(person *model.Person) error {
 	return s.repo.Update(person)
+}
+
+func (s *PersonService) DeletePerson(id int64) error {
+	person, err := s.repo.GetByID(id)
+	if err != nil {
+		return err
+	}
+	if person == nil {
+		return nil
+	}
+
+	tx := s.repo.DB.Begin()
+
+	if err := tx.Where("person_id = ?", id).Delete(&model.Language{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Where("person_id = ?", id).Delete(&model.Position{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Where("person_id = ?", id).Delete(&model.Reference{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Delete(&model.Person{}, id).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }

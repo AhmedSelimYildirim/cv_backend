@@ -29,6 +29,10 @@ func (r *PersonRepository) GetByID(id int64) (*model.Person, error) {
 	return &person, err
 }
 
+func (r *PersonRepository) Create(person *model.Person) error {
+	return r.DB.Create(person).Error
+}
+
 func (r *PersonRepository) Update(person *model.Person) error {
 	return r.DB.Save(person).Error
 }
