@@ -60,7 +60,6 @@ func (h *PersonHandler) DeletePerson(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// ✅ PUT /persons/:id/status → admin only
 func (h *PersonHandler) UpdatePersonStatus(c *fiber.Ctx) error {
 	role := c.Locals("role")
 	if roleStr, ok := role.(string); !ok || roleStr != "admin" {

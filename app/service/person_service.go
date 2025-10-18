@@ -82,7 +82,6 @@ func (s *PersonService) GetPersonsPaginated(status string, page, limit int) ([]m
 	return persons, total, nil
 }
 
-// ✅ Sadece admin'in status güncellemesi için minimal metod
 func (s *PersonService) UpdatePersonStatus(person *model.Person) error {
 	return s.repo.Update(person)
 }
