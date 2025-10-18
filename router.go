@@ -2,6 +2,7 @@ package main
 
 import (
 	"cv_backend/app/handler"
+	"cv_backend/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,25 +20,29 @@ func SetupRouter(
 	api.Get("/ping", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"message": "Pong! ✅ Server & DB are working."})
 	})
-	
+
+	api.Post("/register", userHandler.Register)
+	api.Post("/login", userHandler.Login)
 	api.Post("/persons", personHandler.CreatePerson)
 
-	// Person endpoints
-	api.Get("/persons", personHandler.GetAllPersons)
-	api.Get("/persons/:id", personHandler.GetPersonByID)
-	api.Put("/persons/:id/status", personHandler.UpdatePersonStatus)
-	api.Delete("/persons/:id", personHandler.DeletePerson)
+	auth := api.Group("/auth", middleware.JWTMiddleware())
 
-	// Language / Position / Reference endpoints (public)
-	api.Get("/languages", languageHandler.GetAllLanguages)
-	api.Get("/languages/:id", languageHandler.GetLanguageByID)
-	api.Delete("/languages/:id", languageHandler.DeleteLanguage)
+	auth.Get("/profile", userHandler.GetProfile)
 
-	api.Get("/positions", positionHandler.GetAllPositions)
-	api.Get("/positions/:id", positionHandler.GetPositionByID)
-	api.Delete("/positions/:id", positionHandler.DeletePosition)
+	auth.Get("/persons", personHandler.GetAllPersons)
+	auth.Get("/persons/:id", personHandler.GetPersonByID)
+	auth.Put("/persons/:id/status", personHandler.UpdatePersonStatus)
+	auth.Delete("/persons/:id", personHandler.DeletePerson)
 
-	api.Get("/references", referenceHandler.GetAllReferences)
-	api.Get("/references/:id", referenceHandler.GetReferenceByID)
-	api.Delete("/references/:id", referenceHandler.DeleteReference)
+	auth.Get("/languages", languageHandler.GetAllLanguages)
+	auth.Get("/languages/:id", languageHandler.GetLanguageByID)
+	auth.Delete("/languages/:id", languageHandler.DeleteLanguage)
+
+	auth.Get("/positions", positionHandler.GetAllPositions)
+	auth.Get("/positions/:id", positionHandler.GetPositionByID)
+	auth.Delete("/positions/:id", positionHandler.DeletePosition)
+
+	auth.Get("/references", referenceHandler.GetAllReferences)
+	auth.Get("/references/:id", referenceHandler.GetReferenceByID)
+	auth.Delete("/references/:id", referenceHandler.DeleteReference)
 }
