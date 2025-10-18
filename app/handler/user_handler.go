@@ -65,8 +65,16 @@ func (h *UserHandler) GetProfile(c *fiber.Ctx) error {
 
 func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
-	id, ok := userID.(uint)
-	if !ok {
+	var id int64
+
+	switch v := userID.(type) {
+	case float64:
+		id = int64(v)
+	case int:
+		id = int64(v)
+	case int64:
+		id = v
+	default:
 		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "Invalid user")
 	}
 
@@ -80,7 +88,7 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	user, err := h.service.GetByID(int64(id))
+	user, err := h.service.GetByID(id)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
 	}
