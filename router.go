@@ -34,6 +34,7 @@ func SetupRouter(
 
 	auth.Get("/languages", languageHandler.GetAllLanguages)
 	auth.Get("/languages/:id", languageHandler.GetLanguageByID)
+	auth.Delete("/languages/:id", languageHandler.DeleteLanguage)
 
 	auth.Get("/positions", positionHandler.GetAllPositions)
 	auth.Get("/positions/:id", positionHandler.GetPositionByID)
