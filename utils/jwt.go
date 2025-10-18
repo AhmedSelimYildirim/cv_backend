@@ -12,7 +12,7 @@ func GenerateJWT(userID uint, email string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"email":   email,
-		"role":    "admin", // 👈 Her kullanıcı admin sayılacak
+		"role":    "admin",
 		"exp":     time.Now().Add(time.Hour * 72).Unix(),
 	}
 
