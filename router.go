@@ -28,6 +28,7 @@ func SetupRouter(
 	auth := api.Group("/auth", middleware.JWTMiddleware())
 
 	auth.Get("/profile", userHandler.GetProfile)
+	auth.Put("/user", userHandler.UpdateUser)
 
 	auth.Get("/persons", personHandler.GetAllPersons)
 	auth.Get("/persons/:id", personHandler.GetPersonByID)

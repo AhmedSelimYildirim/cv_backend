@@ -40,3 +40,11 @@ func (s *UserService) Login(email, password string) (*model.User, error) {
 	}
 	return user, nil
 }
+
+func (s *UserService) GetByID(id int64) (*model.User, error) {
+	return s.repo.GetByID(id)
+}
+
+func (s *UserService) UpdateUser(user *model.User) error {
+	return s.repo.Update(user)
+}

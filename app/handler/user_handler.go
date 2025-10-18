@@ -62,3 +62,52 @@ func (h *UserHandler) GetProfile(c *fiber.Ctx) error {
 		"role":    c.Locals("role"),
 	})
 }
+
+func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
+	userID := c.Locals("user_id")
+	id, ok := userID.(uint)
+	if !ok {
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "Invalid user")
+	}
+
+	var body struct {
+		Name     string `json:"name"`
+		Surname  string `json:"surname"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	user, err := h.service.GetByID(int64(id))
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	if user == nil {
+		return utils.ErrorResponse(c, fiber.StatusNotFound, "User not found")
+	}
+
+	if body.Name != "" {
+		user.Name = body.Name
+	}
+	if body.Surname != "" {
+		user.Surname = body.Surname
+	}
+	if body.Email != "" {
+		user.Email = body.Email
+	}
+	if body.Password != "" {
+		hashed, err := utils.HashPassword(body.Password)
+		if err != nil {
+			return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Password hash failed")
+		}
+		user.Password = hashed
+	}
+
+	if err := h.service.UpdateUser(user); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return utils.SuccessResponse(c, "User updated successfully", user)
+}
