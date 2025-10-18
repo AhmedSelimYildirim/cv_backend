@@ -22,39 +22,22 @@ func SetupRouter(
 		return c.JSON(fiber.Map{"message": "Pong! ✅ Server & DB are working."})
 	})
 
-	// Public
+	// Public → CV doldurabilir veya kayıt/login olabilir
 	api.Post("/register", userHandler.Register)
 	api.Post("/login", userHandler.Login)
 
-	// Protected
+	// Protected → login olmuş herkes erişebilir
 	auth := api.Group("/auth", middleware.JWTMiddleware())
 	auth.Get("/me", userHandler.GetProfile)
 
-	// Language
-	auth.Post("/languages", languageHandler.CreateLanguage)
-	auth.Get("/languages", languageHandler.GetAllLanguages)
-	auth.Get("/languages/:id", languageHandler.GetLanguageByID)
-	auth.Put("/languages/:id", languageHandler.UpdateLanguage)
-	auth.Delete("/languages/:id", languageHandler.DeleteLanguage)
-
-	// Person
-	auth.Post("/persons", personHandler.CreatePerson)
-	auth.Get("/persons", middleware.RequireRole("admin"), personHandler.GetAllPersons)
+	// Başvuruları yönetmek için role kontrolü yok
+	auth.Get("/persons", personHandler.GetAllPersons)
+	auth.Put("/persons/:id/status", personHandler.UpdatePersonStatus)
 	auth.Get("/persons/:id", personHandler.GetPersonByID)
-	auth.Put("/persons/:id", personHandler.UpdatePerson)
 	auth.Delete("/persons/:id", personHandler.DeletePerson)
 
-	// Position
-	auth.Post("/positions", positionHandler.CreatePosition)
+	// Language / Position / Reference → login olmuş herkes ekleyebilir
+	auth.Get("/languages", languageHandler.GetAllLanguages)
 	auth.Get("/positions", positionHandler.GetAllPositions)
-	auth.Get("/positions/:id", positionHandler.GetPositionByID)
-	auth.Put("/positions/:id", positionHandler.UpdatePosition)
-	auth.Delete("/positions/:id", positionHandler.DeletePosition)
-
-	// Reference
-	auth.Post("/references", referenceHandler.CreateReference)
 	auth.Get("/references", referenceHandler.GetAllReferences)
-	auth.Get("/references/:id", referenceHandler.GetReferenceByID)
-	auth.Put("/references/:id", referenceHandler.UpdateReference)
-	auth.Delete("/references/:id", referenceHandler.DeleteReference)
 }

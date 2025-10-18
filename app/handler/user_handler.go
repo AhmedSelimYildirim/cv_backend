@@ -45,28 +45,22 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 		return utils.ErrorResponse(c, fiber.StatusUnauthorized, err.Error())
 	}
 
-	role := "user"
-	if user.Email == "admin@site.com" {
-		role = "admin"
-	}
-
-	// Token üret
-	token, err := utils.GenerateJWT(uint(user.ID), user.Email, role)
+	token, err := utils.GenerateJWT(uint(user.ID), user.Email)
 	if err != nil {
 		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Token creation failed")
 	}
 
+	// Herkes admin olduğu için direkt role: "admin"
 	return utils.SuccessResponse(c, "Login successful", fiber.Map{
 		"token": token,
 		"user":  user,
-		"role":  role,
+		"role":  "admin",
 	})
 }
 
+// GET /api/profile
 func (h *UserHandler) GetProfile(c *fiber.Ctx) error {
-
 	return c.JSON(fiber.Map{
-		"message": "Profil bilgisi burada gösterilecek.",
 		"user_id": c.Locals("user_id"),
 		"email":   c.Locals("email"),
 		"role":    c.Locals("role"),

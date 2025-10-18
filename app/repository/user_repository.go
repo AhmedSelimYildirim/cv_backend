@@ -7,33 +7,39 @@ import (
 )
 
 type UserRepository struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{DB: db}
+	return &UserRepository{db: db}
 }
 
 func (r *UserRepository) Create(user *model.User) error {
-	return r.DB.Create(user).Error
+	return r.db.Create(user).Error
 }
 
 func (r *UserRepository) GetByEmail(email string) (*model.User, error) {
 	var user model.User
-	err := r.DB.Where("email = ?", email).First(&user).Error
+	err := r.db.Where("email = ?", email).First(&user).Error
+	if err != nil && err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return &user, err
 }
 
 func (r *UserRepository) GetByID(id int64) (*model.User, error) {
 	var user model.User
-	err := r.DB.First(&user, id).Error
+	err := r.db.First(&user, id).Error
+	if err != nil && err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return &user, err
 }
 
 func (r *UserRepository) Update(user *model.User) error {
-	return r.DB.Save(user).Error
+	return r.db.Save(user).Error
 }
 
 func (r *UserRepository) Delete(id int64) error {
-	return r.DB.Delete(&model.User{}, id).Error
+	return r.db.Delete(&model.User{}, id).Error
 }

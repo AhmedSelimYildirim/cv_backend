@@ -16,19 +16,16 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 }
 
 func (s *UserService) Register(user *model.User) error {
-	// Aynı email zaten varsa hata döner
 	exists, _ := s.repo.GetByEmail(user.Email)
 	if exists != nil && exists.ID != 0 {
 		return errors.New("email already registered")
 	}
 
-	// Şifre hashle
 	hashed, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return err
 	}
 	user.Password = hashed
-
 	return s.repo.Create(user)
 }
 
@@ -38,10 +35,8 @@ func (s *UserService) Login(email, password string) (*model.User, error) {
 		return nil, errors.New("invalid email or password")
 	}
 
-	// Şifre kontrolü
 	if !utils.CheckPasswordHash(password, user.Password) {
 		return nil, errors.New("invalid email or password")
 	}
-
 	return user, nil
 }

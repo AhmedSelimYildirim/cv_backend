@@ -2,6 +2,7 @@ package repository
 
 import (
 	"cv_backend/model"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -14,10 +15,6 @@ func NewReferenceRepository(db *gorm.DB) *ReferenceRepository {
 	return &ReferenceRepository{db: db}
 }
 
-func (r *ReferenceRepository) Create(reference *model.Reference) error {
-	return r.db.Create(reference).Error
-}
-
 func (r *ReferenceRepository) GetAll() ([]model.Reference, error) {
 	var references []model.Reference
 	err := r.db.Preload("Person").Find(&references).Error
@@ -27,14 +24,10 @@ func (r *ReferenceRepository) GetAll() ([]model.Reference, error) {
 func (r *ReferenceRepository) GetByID(id int64) (*model.Reference, error) {
 	var reference model.Reference
 	err := r.db.Preload("Person").First(&reference, id).Error
-	if err != nil {
-		return nil, err
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
 	}
-	return &reference, nil
-}
-
-func (r *ReferenceRepository) Update(reference *model.Reference) error {
-	return r.db.Save(reference).Error
+	return &reference, err
 }
 
 func (r *ReferenceRepository) Delete(id int64) error {

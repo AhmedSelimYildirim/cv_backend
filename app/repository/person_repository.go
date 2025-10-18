@@ -14,10 +14,6 @@ func NewPersonRepository(db *gorm.DB) *PersonRepository {
 	return &PersonRepository{DB: db}
 }
 
-func (r *PersonRepository) Create(person *model.Person) error {
-	return r.DB.Create(person).Error
-}
-
 func (r *PersonRepository) GetAll() ([]model.Person, error) {
 	var persons []model.Person
 	err := r.DB.Preload("Positions").Preload("Languages").Preload("References").Find(&persons).Error
@@ -27,6 +23,9 @@ func (r *PersonRepository) GetAll() ([]model.Person, error) {
 func (r *PersonRepository) GetByID(id int64) (*model.Person, error) {
 	var person model.Person
 	err := r.DB.Preload("Positions").Preload("Languages").Preload("References").First(&person, id).Error
+	if err != nil && err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
 	return &person, err
 }
 

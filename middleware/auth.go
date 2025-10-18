@@ -9,53 +9,25 @@ import (
 
 func JWTMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Authorization header'ını al
 		authHeader := c.Get("Authorization")
-
 		if authHeader == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Missing Authorization header",
-			})
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Missing Authorization header"})
 		}
 
-		tokenParts := strings.Split(authHeader, " ")
-		if len(tokenParts) != 2 || strings.ToLower(tokenParts[0]) != "bearer" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid Authorization header format. Expected 'Bearer <token>'",
-			})
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid Authorization header"})
 		}
 
-		tokenString := tokenParts[1]
-
-		claims, err := utils.ValidateJWT(tokenString)
+		claims, err := utils.ValidateJWT(parts[1])
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Unauthorized or invalid token",
-			})
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
 		}
 
-		if userID, ok := claims["user_id"]; ok {
-			c.Locals("user_id", userID)
-		}
-		if role, ok := claims["role"]; ok {
-			c.Locals("role", role)
-		}
-		if email, ok := claims["email"]; ok {
-			c.Locals("email", email)
-		}
+		c.Locals("user_id", claims["user_id"])
+		c.Locals("email", claims["email"])
+		c.Locals("role", claims["role"])
 
-		return c.Next()
-	}
-}
-
-func RequireRole(requiredRole string) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		userRole, ok := c.Locals("role").(string)
-		if !ok || userRole != requiredRole {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error": "Access denied: insufficient permissions",
-			})
-		}
 		return c.Next()
 	}
 }

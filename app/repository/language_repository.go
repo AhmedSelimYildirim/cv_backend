@@ -2,6 +2,7 @@ package repository
 
 import (
 	"cv_backend/model"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -14,10 +15,6 @@ func NewLanguageRepository(db *gorm.DB) *LanguageRepository {
 	return &LanguageRepository{db: db}
 }
 
-func (r *LanguageRepository) Create(language *model.Language) error {
-	return r.db.Create(language).Error
-}
-
 func (r *LanguageRepository) GetAll() ([]model.Language, error) {
 	var languages []model.Language
 	err := r.db.Find(&languages).Error
@@ -27,14 +24,10 @@ func (r *LanguageRepository) GetAll() ([]model.Language, error) {
 func (r *LanguageRepository) GetByID(id int64) (*model.Language, error) {
 	var language model.Language
 	err := r.db.First(&language, id).Error
-	if err != nil {
-		return nil, err
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
 	}
-	return &language, nil
-}
-
-func (r *LanguageRepository) Update(language *model.Language) error {
-	return r.db.Save(language).Error
+	return &language, err
 }
 
 func (r *LanguageRepository) Delete(id int64) error {
