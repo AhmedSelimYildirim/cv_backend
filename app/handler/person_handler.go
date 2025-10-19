@@ -17,6 +17,7 @@ func NewPersonHandler(s *service.PersonService) *PersonHandler {
 	return &PersonHandler{Service: s}
 }
 
+// ✅ GET /auth/persons?page=&limit=&status=
 func (h *PersonHandler) GetAllPersons(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("limit", "10"))
@@ -41,6 +42,7 @@ func (h *PersonHandler) GetAllPersons(c *fiber.Ctx) error {
 	})
 }
 
+// ✅ GET /auth/persons/:id
 func (h *PersonHandler) GetPersonByID(c *fiber.Ctx) error {
 	id, _ := strconv.ParseInt(c.Params("id"), 10, 64)
 	person, err := h.Service.GetPersonByID(id)
@@ -53,6 +55,7 @@ func (h *PersonHandler) GetPersonByID(c *fiber.Ctx) error {
 	return c.JSON(viewmodel.ToPersonDTO(person))
 }
 
+// ✅ POST /api/persons  (public)
 func (h *PersonHandler) CreatePerson(c *fiber.Ctx) error {
 	var person model.Person
 	if err := c.BodyParser(&person); err != nil {
@@ -67,6 +70,7 @@ func (h *PersonHandler) CreatePerson(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(viewmodel.ToPersonDTO(createdPerson))
 }
 
+// ✅ DELETE /auth/persons/:id
 func (h *PersonHandler) DeletePerson(c *fiber.Ctx) error {
 	id, _ := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err := h.Service.DeletePerson(id); err != nil {
@@ -75,6 +79,7 @@ func (h *PersonHandler) DeletePerson(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
+// ✅ PUT /auth/persons/:id/status
 func (h *PersonHandler) UpdatePersonStatus(c *fiber.Ctx) error {
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
@@ -100,13 +105,13 @@ func (h *PersonHandler) UpdatePersonStatus(c *fiber.Ctx) error {
 
 	switch body.StatusType {
 	case "beklemede":
-		person.StatusType = 0
+		person.StatusType = model.PersonDurumBeklemede
 	case "onaylandi":
-		person.StatusType = 1
+		person.StatusType = model.PersonDurumOnaylandi
 	case "reddedildi":
-		person.StatusType = 2
+		person.StatusType = model.PersonDurumReddedildi
 	case "ilgileniliyor":
-		person.StatusType = 3
+		person.StatusType = model.PersonDurumIlgileniliyor
 	default:
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid status_type"})
 	}

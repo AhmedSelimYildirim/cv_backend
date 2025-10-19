@@ -14,16 +14,38 @@ func NewPersonRepository(db *gorm.DB) *PersonRepository {
 	return &PersonRepository{DB: db}
 }
 
-func (r *PersonRepository) GetAll() ([]model.Person, error) {
+func (r *PersonRepository) GetAllPaginated(status string, offset, limit int) ([]model.Person, int64, error) {
 	var persons []model.Person
-	err := r.DB.Preload("Positions").Preload("Languages").Preload("References").Find(&persons).Error
-	return persons, err
+	var total int64
+
+	query := r.DB.Model(&model.Person{}).
+		Preload("Positions").
+		Preload("Languages").
+		Preload("References")
+
+	if status != "" {
+		query = query.Where("status_type = ?", status)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Offset(offset).Limit(limit).Find(&persons).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return persons, total, nil
 }
 
 func (r *PersonRepository) GetByID(id int64) (*model.Person, error) {
 	var person model.Person
-	err := r.DB.Preload("Positions").Preload("Languages").Preload("References").First(&person, id).Error
-	if err != nil && err == gorm.ErrRecordNotFound {
+	err := r.DB.Preload("Positions").
+		Preload("Languages").
+		Preload("References").
+		First(&person, id).Error
+
+	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
 	return &person, err
@@ -37,6 +59,25 @@ func (r *PersonRepository) Update(person *model.Person) error {
 	return r.DB.Save(person).Error
 }
 
-func (r *PersonRepository) Delete(id int64) error {
-	return r.DB.Delete(&model.Person{}, id).Error
+func (r *PersonRepository) DeleteWithRelations(id int64) error {
+	tx := r.DB.Begin()
+
+	if err := tx.Where("person_id = ?", id).Delete(&model.Language{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Where("person_id = ?", id).Delete(&model.Position{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Where("person_id = ?", id).Delete(&model.Reference{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Delete(&model.Person{}, id).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
