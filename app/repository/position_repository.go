@@ -31,5 +31,12 @@ func (r *PositionRepository) GetByID(id int64) (*model.Position, error) {
 }
 
 func (r *PositionRepository) Delete(id int64) error {
-	return r.db.Delete(&model.Position{}, id).Error
+	result := r.db.Delete(&model.Position{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

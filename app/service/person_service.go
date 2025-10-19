@@ -3,6 +3,8 @@ package service
 import (
 	"cv_backend/app/repository"
 	"cv_backend/model"
+
+	"gorm.io/gorm"
 )
 
 type PersonService struct {
@@ -39,7 +41,7 @@ func (s *PersonService) DeletePerson(id int64) error {
 		return err
 	}
 	if person == nil {
-		return nil
+		return gorm.ErrRecordNotFound
 	}
 	return s.repo.DeleteWithRelations(id)
 }

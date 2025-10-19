@@ -27,6 +27,9 @@ func (h *PositionHandler) GetPositionByID(c *fiber.Ctx) error {
 	id, _ := strconv.ParseInt(c.Params("id"), 10, 64)
 	position, err := h.service.GetPositionByID(id)
 	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if position == nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Position not found"})
 	}
 	return c.JSON(position)
@@ -34,8 +37,18 @@ func (h *PositionHandler) GetPositionByID(c *fiber.Ctx) error {
 
 func (h *PositionHandler) DeletePosition(c *fiber.Ctx) error {
 	id, _ := strconv.ParseInt(c.Params("id"), 10, 64)
+
+	position, err := h.service.GetPositionByID(id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if position == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Position not found"})
+	}
+
 	if err := h.service.DeletePosition(id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
+
 	return c.SendStatus(fiber.StatusNoContent)
 }

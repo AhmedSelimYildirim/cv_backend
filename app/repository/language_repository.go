@@ -31,5 +31,12 @@ func (r *LanguageRepository) GetByID(id int64) (*model.Language, error) {
 }
 
 func (r *LanguageRepository) Delete(id int64) error {
-	return r.db.Delete(&model.Language{}, id).Error
+	result := r.db.Delete(&model.Language{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

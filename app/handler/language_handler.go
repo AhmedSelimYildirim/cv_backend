@@ -34,6 +34,9 @@ func (h *LanguageHandler) GetLanguageByID(c *fiber.Ctx) error {
 	id, _ := strconv.ParseInt(c.Params("id"), 10, 64)
 	language, err := h.Service.GetByID(id)
 	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if language == nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Language not found"})
 	}
 	return c.JSON(viewmodel.ToLanguageDTO(language))
@@ -43,6 +46,14 @@ func (h *LanguageHandler) DeleteLanguage(c *fiber.Ctx) error {
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
+	}
+
+	language, err := h.Service.GetByID(id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if language == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Language not found"})
 	}
 
 	if err := h.Service.Delete(id); err != nil {

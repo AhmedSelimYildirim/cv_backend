@@ -4,6 +4,7 @@ import (
 	"cv_backend/app/service"
 	"cv_backend/model"
 	"cv_backend/utils"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -118,4 +119,31 @@ func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	}
 
 	return utils.SuccessResponse(c, "User updated successfully", user)
+}
+
+func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
+	userID := c.Locals("user_id")
+	tokenUserID := int64(userID.(float64))
+	paramID, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid ID")
+	}
+
+	if tokenUserID != paramID {
+		return utils.ErrorResponse(c, fiber.StatusForbidden, "You can only delete your own account")
+	}
+
+	user, err := h.service.GetByID(paramID)
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	if user == nil {
+		return utils.ErrorResponse(c, fiber.StatusNotFound, "User not found")
+	}
+
+	if err := h.service.DeleteUser(paramID); err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }

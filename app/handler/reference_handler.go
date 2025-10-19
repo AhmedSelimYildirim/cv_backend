@@ -34,8 +34,15 @@ func (h *ReferenceHandler) GetReferenceByID(c *fiber.Ctx) error {
 
 func (h *ReferenceHandler) DeleteReference(c *fiber.Ctx) error {
 	id, _ := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err := h.service.DeleteReference(id); err != nil {
+	err := h.service.DeleteReference(id)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
+
+	ref, _ := h.service.GetReferenceByID(id)
+	if ref == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Reference not found"})
+	}
+
 	return c.SendStatus(fiber.StatusNoContent)
 }

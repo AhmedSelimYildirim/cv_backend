@@ -3,6 +3,8 @@ package service
 import (
 	"cv_backend/app/repository"
 	"cv_backend/model"
+
+	"gorm.io/gorm"
 )
 
 type LanguageService struct {
@@ -22,5 +24,12 @@ func (s *LanguageService) GetByID(id int64) (*model.Language, error) {
 }
 
 func (s *LanguageService) Delete(id int64) error {
+	language, err := s.repo.GetByID(id)
+	if err != nil {
+		return err
+	}
+	if language == nil {
+		return gorm.ErrRecordNotFound
+	}
 	return s.repo.Delete(id)
 }

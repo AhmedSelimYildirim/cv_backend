@@ -31,12 +31,12 @@ func (s *UserService) Register(user *model.User) error {
 
 func (s *UserService) Login(email, password string) (*model.User, error) {
 	user, err := s.repo.GetByEmail(email)
-	if err != nil {
-		return nil, errors.New("invalid email or password")
+	if err != nil || user == nil {
+		return nil, errors.New("invalid email")
 	}
 
 	if !utils.CheckPasswordHash(password, user.Password) {
-		return nil, errors.New("invalid email or password")
+		return nil, errors.New("invalid password")
 	}
 	return user, nil
 }
@@ -47,4 +47,8 @@ func (s *UserService) GetByID(id int64) (*model.User, error) {
 
 func (s *UserService) UpdateUser(user *model.User) error {
 	return s.repo.Update(user)
+}
+
+func (s *UserService) DeleteUser(id int64) error {
+	return s.repo.Delete(id)
 }
