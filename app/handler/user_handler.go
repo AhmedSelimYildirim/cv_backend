@@ -18,12 +18,24 @@ func NewUserHandler(s *service.UserService) *UserHandler {
 }
 
 func (h *UserHandler) Register(c *fiber.Ctx) error {
-	var user model.User
+	var user struct {
+		Name     string `json:"name"`
+		Surname  string `json:"surname"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 	if err := c.BodyParser(&user); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	if err := h.service.Register(&user); err != nil {
+	u := &model.User{
+		Name:     user.Name,
+		Surname:  user.Surname,
+		Email:    user.Email,
+		Password: user.Password,
+	}
+
+	if err := h.service.Register(u); err != nil {
 		return utils.ErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
@@ -52,22 +64,29 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, "Login successful", fiber.Map{
 		"token": token,
 		"user":  user,
-		"role":  "admin",
 	})
 }
 
 func (h *UserHandler) GetProfile(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"user_id": c.Locals("user_id"),
+	userID := c.Locals("user_id")
+	return utils.SuccessResponse(c, "Profile fetched successfully", fiber.Map{
+		"user_id": userID,
 		"email":   c.Locals("email"),
 		"role":    c.Locals("role"),
 	})
 }
 
+func (h *UserHandler) GetAllUsers(c *fiber.Ctx) error {
+	users, err := h.service.GetAllUsers()
+	if err != nil {
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.SuccessResponse(c, "All users fetched successfully", users)
+}
+
 func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 	var id int64
-
 	switch v := userID.(type) {
 	case float64:
 		id = int64(v)

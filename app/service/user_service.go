@@ -45,6 +45,10 @@ func (s *UserService) GetByID(id int64) (*model.User, error) {
 	return s.repo.GetByID(id)
 }
 
+func (s *UserService) GetAllUsers() ([]model.User, error) {
+	return s.repo.GetAll()
+}
+
 func (s *UserService) UpdateUser(user *model.User) error {
 	return s.repo.Update(user)
 }

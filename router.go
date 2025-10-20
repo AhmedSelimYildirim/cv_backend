@@ -30,6 +30,7 @@ func SetupRouter(
 	auth.Get("/profile", userHandler.GetProfile)
 	auth.Put("/user", userHandler.UpdateUser)
 	auth.Delete("/user/:id", userHandler.DeleteUser)
+	auth.Get("/users", userHandler.GetAllUsers)
 
 	auth.Get("/persons", personHandler.GetAllPersons)
 	auth.Get("/persons/:id", personHandler.GetPersonByID)

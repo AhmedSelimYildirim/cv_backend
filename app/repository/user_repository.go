@@ -2,6 +2,7 @@ package repository
 
 import (
 	"cv_backend/model"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -21,7 +22,7 @@ func (r *UserRepository) Create(user *model.User) error {
 func (r *UserRepository) GetByEmail(email string) (*model.User, error) {
 	var user model.User
 	err := r.db.Where("email = ?", email).First(&user).Error
-	if err != nil && err == gorm.ErrRecordNotFound {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	return &user, err
@@ -30,10 +31,16 @@ func (r *UserRepository) GetByEmail(email string) (*model.User, error) {
 func (r *UserRepository) GetByID(id int64) (*model.User, error) {
 	var user model.User
 	err := r.db.First(&user, id).Error
-	if err != nil && err == gorm.ErrRecordNotFound {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	return &user, err
+}
+
+func (r *UserRepository) GetAll() ([]model.User, error) {
+	var users []model.User
+	err := r.db.Find(&users).Error
+	return users, err
 }
 
 func (r *UserRepository) Update(user *model.User) error {
